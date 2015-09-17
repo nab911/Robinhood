@@ -4,6 +4,18 @@ import urllib
 
 class Robinhood:
 
+    session = None
+
+    username = None
+
+    password = None
+
+    headers = None
+
+    auth_token = None
+
+    account_number = None
+
     endpoints = {
             "login": "https://api.robinhood.com/api-token-auth/",
             "investment_profile": "https://api.robinhood.com/user/investment_profile/",
@@ -25,17 +37,6 @@ class Robinhood:
             "user":"https://api.robinhood.com/user/",
             "watchlists":"https://api.robinhood.com/watchlists/"
     }
-
-    session = None
-
-    username = None
-
-    password = None
-
-    headers = None
-
-    auth_token = None
-
 
     ##############################
     #Logging in and initializing
@@ -71,12 +72,23 @@ class Robinhood:
     ##############################
 
     def investment_profile(self):
-        self.session.get(self.endpoints['investment_profile'])
+        return self.session.get(self.endpoints['investment_profile'])
 
     def instruments(self, stock=None):
         res = self.session.get(self.endpoints['instruments'], params={'query':stock.upper()})
         res = res.json()
         return res['results']
+
+    def accounts(self):
+        accounts = self.session.get(self.endpoints['accounts'])
+        self.account_number = accounts.json()['results'][0]['account_number']
+        return accounts
+
+    def portfolio(self):
+        if account_number == None:
+            self.accounts()
+        portfolio = self.session.get("https://api.robinhood.com/accounts/"+self.account_number+"/portfolio/")
+        return portfolio
 
     def quote_data(self, stock=None):
         #Prompt for stock if not entered
@@ -137,6 +149,9 @@ class Robinhood:
 
     def last_updated_at(self, stock=None):
         return self.quote_data(stock)['updated_at'];
+
+    def dividends(self):
+        self.session.get(self.endpoints['dividends'])
 
 
     ##############################
