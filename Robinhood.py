@@ -14,7 +14,11 @@ class Robinhood:
 
     auth_token = None
 
-    account_number = None
+    data = {        
+        'account_number': None
+    }
+
+    url = None
 
     endpoints = {
             "login": "https://api.robinhood.com/api-token-auth/",
@@ -81,14 +85,27 @@ class Robinhood:
 
     def accounts(self):
         accounts = self.session.get(self.endpoints['accounts'])
-        self.account_number = accounts.json()['results'][0]['account_number']
+        self.url = accounts.json()['results'][0]['url']
+        self.data['account_number'] = accounts.json()['results'][0]['account_number']
+        self.data['buying_power'] = accounts.json()['results'][0]['buying_power']
         return accounts
 
+    def user(self):
+        return self.session.get(self.endpoints['user'])
+
     def portfolio(self):
-        if account_number == None:
+        if self.url == None:
             self.accounts()
-        portfolio = self.session.get("https://api.robinhood.com/accounts/"+self.account_number+"/portfolio/")
+        portfolio = self.session.get(self.url+"portfolio/")
+        self.data['portfolio_current_value'] = portfolio.json()['market_value']
+        self.data['portfolio_previous_value'] = portfolio.json()['adjusted_equity_previous_close']
         return portfolio
+
+    def holdings(self):
+        if self.url == None:
+            self.accounts()
+        holdings = self.session.get(self.url+"positions/")
+        return holdings
 
     def quote_data(self, stock=None):
         #Prompt for stock if not entered
@@ -151,7 +168,7 @@ class Robinhood:
         return self.quote_data(stock)['updated_at'];
 
     def dividends(self):
-        self.session.get(self.endpoints['dividends'])
+        return self.session.get(self.endpoints['dividends'])
 
 
     ##############################
