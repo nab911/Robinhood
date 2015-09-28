@@ -62,6 +62,9 @@ class Robinhood:
         }
         self.session.headers = self.headers
         self.login()
+        self.accounts()
+        self.portfolio()
+        self.holdings()
 
     def login(self):
         data = "password=%s&username=%s" % (self.password, self.username)
@@ -72,16 +75,8 @@ class Robinhood:
 
 
     ##############################
-    #GET DATA 
+    # USER DATA 
     ##############################
-
-    def investment_profile(self):
-        return self.session.get(self.endpoints['investment_profile'])
-
-    def instruments(self, stock=None):
-        res = self.session.get(self.endpoints['instruments'], params={'query':stock.upper()})
-        res = res.json()
-        return res['results']
 
     def accounts(self):
         accounts = self.session.get(self.endpoints['accounts'])
@@ -93,19 +88,56 @@ class Robinhood:
     def user(self):
         return self.session.get(self.endpoints['user'])
 
+    ##############################
+    # PORTFOLIO DATA 
+    ##############################
+
+    def investment_profile(self):
+        return self.session.get(self.endpoints['investment_profile'])   
+
     def portfolio(self):
-        if self.url == None:
-            self.accounts()
         portfolio = self.session.get(self.url+"portfolio/")
         self.data['portfolio_current_value'] = portfolio.json()['market_value']
-        self.data['portfolio_previous_value'] = portfolio.json()['adjusted_equity_previous_close']
         return portfolio
 
     def holdings(self):
-        if self.url == None:
-            self.accounts()
         holdings = self.session.get(self.url+"positions/")
+        self.data['holdings'] = []
+        
+        for holding in holdings.json()['results']:
+            instrument = self.session.get(holding['instrument']).json()
+            newHolding = {
+                'symbol': instrument['symbol'],
+                'name': instrument['name'],
+                'current_price': holding['average_buy_price'],
+                #'purchase_price': holding['price'],
+                'shares': holding['quantity']
+            }
+            self.data['holdings'].append(newHolding)
+
         return holdings
+
+    def dividends(self):
+        return self.session.get(self.endpoints['dividends'])
+
+    def print_porfolio_header(self):
+        print '*** Porfolio ***'
+        print 'Current Value: ' + self.data['portfolio_current_value'] + ' Buying Power: ' + self.data['buying_power']
+
+    def print_holdings(self):
+        print "*** Holdings ***"
+        for holding in self.data['holdings']:
+            print holding['name'] + ' (' + holding['symbol'] + ')' + ' Shares: ' + holding['shares'] + ' Current Price: ' + holding['current_price']
+
+
+    ##############################
+    # STOCK DATA 
+    ##############################
+
+    def instruments(self, stock=None):
+        res = self.session.get(self.endpoints['instruments'], params={'query':stock.upper()})
+        res = res.json()
+        return res['results'] 
 
     def quote_data(self, stock=None):
         #Prompt for stock if not entered
@@ -166,9 +198,6 @@ class Robinhood:
 
     def last_updated_at(self, stock=None):
         return self.quote_data(stock)['updated_at'];
-
-    def dividends(self):
-        return self.session.get(self.endpoints['dividends'])
 
 
     ##############################
