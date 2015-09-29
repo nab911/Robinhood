@@ -1,6 +1,7 @@
 import json
 import requests
 import urllib
+from collections import OrderedDict
 
 class Robinhood:
 
@@ -103,22 +104,35 @@ class Robinhood:
     def holdings(self):
         holdings = self.session.get(self.url+"positions/")
         self.data['holdings'] = []
-        
+        total = 0
         for holding in holdings.json()['results']:
             instrument = self.session.get(holding['instrument']).json()
+            price = float(self.bid_price(instrument['symbol']))
             newHolding = {
                 'symbol': instrument['symbol'],
                 'name': instrument['name'],
-                'current_price': holding['average_buy_price'],
-                #'purchase_price': holding['price'],
-                'shares': holding['quantity']
+                'purchase_price': holding['average_buy_price'],
+                'current_price': price,
+                'current_value': float(holding['quantity']) * price,                
+                'shares': holding['quantity'],
+                'percent': 0
             }
             self.data['holdings'].append(newHolding)
+            total += newHolding['current_value']
+
+        for holding in self.data['holdings']:
+            holding['percent'] = holding['current_value'] / total
 
         return holdings
 
     def dividends(self):
         return self.session.get(self.endpoints['dividends'])
+
+    def get_allocations(self):
+        allocations = OrderedDict()
+        for holding in self.data['holdings']:
+            allocations[str(holding['symbol'])] = holding['percent']  # symbols and corresponding allocations
+        return allocations
 
     def print_porfolio_header(self):
         print '*** Porfolio ***'
@@ -127,7 +141,7 @@ class Robinhood:
     def print_holdings(self):
         print "*** Holdings ***"
         for holding in self.data['holdings']:
-            print holding['name'] + ' (' + holding['symbol'] + ')' + ' Shares: ' + holding['shares'] + ' Current Price: ' + holding['current_price']
+            print holding['name'] + ' (' + holding['symbol'] + ')' + ' Shares: ' + holding['shares'] + ' Purchase Price: ' + holding['purchase_price']
 
 
     ##############################
@@ -157,14 +171,6 @@ class Robinhood:
     def get_quote(self, stock=None):
         data = self.quote_data(stock)
         return data["symbol"]
-
-    def print_quote(self, stock=None):
-        data = self.quote_data(stock)
-        print(data["symbol"] + ": $" + data["last_trade_price"]);
-
-    def print_quotes(self, stocks):
-        for i in range(len(stocks)):
-            self.print_quote(stocks[i]);
 
     def ask_price(self, stock=None):
         return self.quote_data(stock)['ask_price'];
@@ -198,6 +204,14 @@ class Robinhood:
 
     def last_updated_at(self, stock=None):
         return self.quote_data(stock)['updated_at'];
+
+    def print_quote(self, stock=None):
+        data = self.quote_data(stock)
+        print(data["symbol"] + ": $" + data["last_trade_price"]);
+
+    def print_quotes(self, stocks):
+        for i in range(len(stocks)):
+            self.print_quote(stocks[i]);
 
 
     ##############################
