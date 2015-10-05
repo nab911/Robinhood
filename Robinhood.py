@@ -83,7 +83,7 @@ class Robinhood:
         accounts = self.session.get(self.endpoints['accounts'])
         self.url = accounts.json()['results'][0]['url']
         self.data['account_number'] = accounts.json()['results'][0]['account_number']
-        self.data['buying_power'] = accounts.json()['results'][0]['buying_power']
+        self.data['buying_power'] = float(accounts.json()['results'][0]['buying_power'])
         return accounts
 
     def user(self):
@@ -98,7 +98,7 @@ class Robinhood:
 
     def portfolio(self):
         portfolio = self.session.get(self.url+"portfolio/")
-        self.data['portfolio_current_value'] = portfolio.json()['market_value']
+        self.data['portfolio_current_value'] = float(portfolio.json()['market_value'])
         return portfolio
 
     def holdings(self):
@@ -113,7 +113,7 @@ class Robinhood:
                 'name': instrument['name'],
                 'purchase_price': holding['average_buy_price'],
                 'current_price': price,
-                'current_value': float(holding['quantity']) * price,                
+                'current_value': float(holding['quantity']) * price,               
                 'shares': holding['quantity'],
                 'percent': 0
             }
@@ -121,7 +121,10 @@ class Robinhood:
             total += newHolding['current_value']
 
         for holding in self.data['holdings']:
-            holding['percent'] = holding['current_value'] / total
+            if total > 0:
+                holding['percent'] = holding['current_value'] / total
+            else:
+                holding['percent'] = 0
 
         return holdings
 
@@ -136,7 +139,7 @@ class Robinhood:
 
     def print_porfolio_header(self):
         print '*** Porfolio ***'
-        print 'Current Value: ' + self.data['portfolio_current_value'] + ' Buying Power: ' + self.data['buying_power']
+        print 'Current Value: ' + str(self.data['portfolio_current_value']) + ' Buying Power: ' + str(self.data['buying_power'])
 
     def print_holdings(self):
         print "*** Holdings ***"
