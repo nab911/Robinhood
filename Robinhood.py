@@ -80,7 +80,15 @@ class Robinhood:
     ##############################
 
     def accounts(self):
-        accounts = self.session.get(self.endpoints['accounts'])
+        try:
+            accounts = self.session.get(self.endpoints['accounts'])
+        except(requests.exceptions.ReadTimeout):
+            print "Timeout getting account. Skipping..."
+            accounts = self.session.get(self.endpoints['accounts'])
+        except(requests.exceptions.ConnectionError):
+            print "Tried to get account but something weird happened. Skipping..."
+            accounts = self.session.get(self.endpoints['accounts'])
+
         self.url = accounts.json()['results'][0]['url']
         self.data['account_number'] = accounts.json()['results'][0]['account_number']
         self.data['buying_power'] = float(accounts.json()['results'][0]['buying_power'])
@@ -170,6 +178,9 @@ class Robinhood:
                 raise NameError("Invalid Symbol: " + stock);
         except (ValueError):
             raise NameError("Invalid Symbol: " + stock);
+        except (IOError):
+            print "Robinhood timed out..."
+            return self.quote_data(stock)
 
     def get_quote(self, stock=None):
         data = self.quote_data(stock)
@@ -219,19 +230,32 @@ class Robinhood:
 
     ##############################
     #PLACE ORDER
+    # time_in_force: gfd (good for day), gtc (good till canceled)
+    # transaction_type: market, limit
     ##############################
 
-    def place_order(self, symbol, quantity=1, bid_price = None, transaction=None):
+    def place_order(self, symbol, quantity=1, price=None, transaction=None, time_in_force='gfd', transaction_type='limit'):
         quotes = self.instruments(symbol)
         if(len(quotes) == 0):
             return []
-        
+
         instrument = quotes[0]
 
-        if bid_price == None:
-            bid_price = self.quote_data(instrument['symbol'])[0]['bid_price']
-        data = 'account=%s&instrument=%s&price=%f&quantity=%d&side=buy&symbol=%s&time_in_force=gfd&trigger=immediate&type=market' % (urllib.quote('https://api.robinhood.com/accounts/'+self.data['account_number']+'/'), urllib.unquote(instrument['url']), float(bid_price), quantity, instrument['symbol']) 
+        if price == None:
+            price = self.quote_data(instrument['symbol'])[0]['bid_price']
+        
+        data = 'account='+urllib.quote('https://api.robinhood.com/accounts/'+self.data['account_number']+'/')\
+            +'&instrument='+urllib.unquote(instrument['url'])\
+            +'&price='+str(float(price))\
+            +'&quantity='+str(quantity)\
+            +'&side='+transaction\
+            +'&symbol='+instrument['symbol']\
+            +'&time_in_force='+time_in_force\
+            +'&trigger=immediate'\
+            +'&type='+transaction_type
+
         res = self.session.post(self.endpoints['orders'], data=data)
+        print res.content
         return res
 
     def place_buy_order(self, symbol, quantity, bid_price=None):
