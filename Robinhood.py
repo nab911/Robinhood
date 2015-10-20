@@ -244,6 +244,8 @@ class Robinhood:
         if price == None:
             price = self.quote_data(instrument['symbol'])[0]['bid_price']
         
+        price = round(price, 2)
+        
         data = 'account='+urllib.quote('https://api.robinhood.com/accounts/'+self.data['account_number']+'/')\
             +'&instrument='+urllib.unquote(instrument['url'])\
             +'&price='+str(float(price))\
