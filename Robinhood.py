@@ -114,7 +114,11 @@ class Robinhood:
         self.data['holdings'] = []
         total = 0
         for holding in holdings.json()['results']:
-            instrument = self.session.get(holding['instrument']).json()
+            try:
+                instrument = self.session.get(holding['instrument']).json()
+            except(requests.exceptions.ConnectionError):
+                print "Tried to get holdings but something weird happened. Skipping..."
+                instrument = self.session.get(holding['instrument']).json()
             price = float(self.bid_price(instrument['symbol']))
             newHolding = {
                 'symbol': instrument['symbol'],
