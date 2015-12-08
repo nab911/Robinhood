@@ -171,17 +171,17 @@ class Robinhood:
     def quote_data(self, stock=None):
         #Prompt for stock if not entered
         if stock is None:
-            stock = raw_input("Symbol: ");
+            stock = raw_input("Symbol: ")
         url = str(self.endpoints['quotes']) + str(stock) + "/"
         #Check for validity of symbol
         try:
-            res = json.loads((urllib.urlopen(url)).read());
+            res = json.loads((urllib.urlopen(url)).read())
             if len(res) > 0:
-                return res;
+                return res
             else:
-                raise NameError("Invalid Symbol: " + stock);
+                raise NameError("Invalid Symbol: " + stock)
         except (ValueError):
-            raise NameError("Invalid Symbol: " + stock);
+            raise NameError("Invalid Symbol: " + stock)
         except (IOError):
             print "Robinhood timed out..."
             return self.quote_data(stock)
@@ -191,45 +191,45 @@ class Robinhood:
         return data
 
     def ask_price(self, stock=None):
-        return self.quote_data(stock)['ask_price'];
+        return self.quote_data(stock)['ask_price']
 
     def ask_size(self, stock=None):
-        return self.quote_data(stock)['ask_size'];
+        return self.quote_data(stock)['ask_size']
 
     def bid_price(self, stock=None):
-        return self.quote_data(stock)['bid_price'];
+        return self.quote_data(stock)['bid_price']
 
     def bid_size(self, stock=None):
-        return self.quote_data(stock)['bid_size'];
+        return self.quote_data(stock)['bid_size']
 
     def last_trade_price(self, stock=None):
-        return self.quote_data(stock)['last_trade_price'];
+        return self.quote_data(stock)['last_trade_price']
 
     def last_trade_price(self, stock=None):
-        return self.quote_data(stock)['last_trade_price'];
+        return self.quote_data(stock)['last_trade_price']
 
     def previous_close(self, stock=None):
-        return self.quote_data(stock)['previous_close'];
+        return self.quote_data(stock)['previous_close']
 
     def previous_close_date(self, stock=None):
-        return self.quote_data(stock)['previous_close_date'];
+        return self.quote_data(stock)['previous_close_date']
 
     def adjusted_previous_close(self, stock=None):
-        return self.quote_data(stock)['adjusted_previous_close'];
+        return self.quote_data(stock)['adjusted_previous_close']
 
     def symbol(self, stock=None):
-        return self.quote_data(stock)['symbol'];
+        return self.quote_data(stock)['symbol']
 
     def last_updated_at(self, stock=None):
-        return self.quote_data(stock)['updated_at'];
+        return self.quote_data(stock)['updated_at']
 
     def print_quote(self, stock=None):
         data = self.quote_data(stock)
-        print(data["symbol"] + ": $" + data["last_trade_price"]);
+        print(data["symbol"] + ": $" + data["last_trade_price"])
 
     def print_quotes(self, stocks):
         for i in range(len(stocks)):
-            self.print_quote(stocks[i]);
+            self.print_quote(stocks[i])
 
 
     ##############################
